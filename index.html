@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espada en el Objeto Rosa Más Cercano</title>
+    <title>Espada en el Objeto Verde Más Cercano</title>
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -30,7 +30,7 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            detectPinkObject();
+            detectGreenObject();
         }
 
         function startVideo() {
@@ -57,7 +57,7 @@
             context.drawImage(swordImage, x - swordImage.width / 2, y - swordImage.height / 2);
         }
 
-        function detectPinkObject() {
+        function detectGreenObject() {
             function processFrame() {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const frame = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -71,8 +71,8 @@
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    // Detección de rosa: valores altos en R y B, y valores de G variados
-                    if (r > 150 && b > 150 && g < 120) {
+                    // Detección de verde: valores altos en G, valores bajos en R y B
+                    if (g > 100 && r < 80 && b < 80) {
                         const x = (i / 4) % canvas.width;
                         const y = Math.floor((i / 4) / canvas.width);
 
@@ -88,7 +88,7 @@
                 if (minDistance < Infinity) {
                     drawSword(closestPoint.x, closestPoint.y);
                 } else {
-                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto rosa
+                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto verde
                 }
 
                 requestAnimationFrame(processFrame);
