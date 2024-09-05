@@ -20,6 +20,10 @@
         const canvas = document.getElementById('swordCanvas');
         const context = canvas.getContext('2d');
 
+        // Crear una imagen de espada
+        const swordImage = new Image();
+        swordImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAAgAAADAAAAAElFTkSuQmCC'; // Cambia esta línea con la URL o base64 de tu imagen de espada
+
         async function init() {
             await startVideo();
 
@@ -49,18 +53,8 @@
         function drawSword(x, y) {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            const swordWidth = 20;
-            const swordHeight = 80;
-
-            context.strokeStyle = 'silver';
-            context.lineWidth = 5;
-            context.beginPath();
-            context.moveTo(x - swordWidth / 2, y - swordHeight / 2);
-            context.lineTo(x + swordWidth / 2, y - swordHeight / 2);
-            context.lineTo(x + swordWidth / 2, y + swordHeight / 2);
-            context.lineTo(x - swordWidth / 2, y + swordHeight / 2);
-            context.closePath();
-            context.stroke();
+            // Dibujar la espada en el canvas
+            context.drawImage(swordImage, x - swordImage.width / 2, y - swordImage.height / 2);
         }
 
         function detectBlackObject() {
