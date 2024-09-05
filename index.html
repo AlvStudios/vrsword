@@ -7,7 +7,7 @@
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        #swordCanvas { position: absolute; pointer-events: none; }
+        #swordCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -24,12 +24,12 @@
             iouThreshold: 0.5,       // Umbral de superposición
             scoreThreshold: 0.6,     // Umbral de puntuación de confianza
         };
-        
+
         let model;
 
         // Inicializar el modelo y la cámara
         async function init() {
-            model = await handTrack.load();
+            model = await handTrack.load(modelParams);
             await startVideo();
             detectHand();
         }
@@ -39,8 +39,12 @@
             return new Promise((resolve, reject) => {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                     .then(stream => {
-                        document.getElementById('video').srcObject = stream;
-                        document.getElementById('video').onloadedmetadata = () => resolve();
+                        const video = document.getElementById('video');
+                        video.srcObject = stream;
+                        video.onloadedmetadata = () => {
+                            resizeCanvas();
+                            resolve();
+                        };
                     })
                     .catch(err => reject(err));
             });
@@ -53,7 +57,6 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
         }
-        resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
         // Dibujar la espada
@@ -84,8 +87,13 @@
                     const y = hand[1] + hand[3] / 2;
 
                     drawSword(x, y);
+                } else {
+                    // Borra la espada si no se detecta mano
+                    drawSword(-100, -100); // Coloca la espada fuera de la vista
                 }
                 requestAnimationFrame(detectHand);
+            }).catch(err => {
+                console.error('Error al detectar la mano:', err);
             });
         }
 
