@@ -14,6 +14,7 @@
     <video id="video" autoplay></video>
     <canvas id="swordCanvas"></canvas>
 
+    <!-- Incluir handtrack.js desde un CDN -->
     <script src="https://cdn.jsdelivr.net/npm/handtrackjs@0.0.9/dist/handtrack.min.js"></script>
     <script>
         const video = document.getElementById('video');
@@ -59,18 +60,20 @@
 
         // Dibujar la espada
         function drawSword(x, y) {
+            const swordLength = 100;
+            const swordWidth = 10;
+            
             context.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Dibujar la espada en el canvas
+            
             context.strokeStyle = 'silver';
-            context.lineWidth = 5;
+            context.lineWidth = swordWidth;
             context.beginPath();
-            context.moveTo(x, y - 20);
-            context.lineTo(x, y + 80);
-            context.moveTo(x - 10, y - 10);
-            context.lineTo(x + 10, y - 10);
-            context.moveTo(x - 10, y + 80);
-            context.lineTo(x + 10, y + 80);
+            context.moveTo(x, y - swordLength / 2);
+            context.lineTo(x, y + swordLength / 2);
+            context.moveTo(x - swordWidth / 2, y - swordLength / 4);
+            context.lineTo(x + swordWidth / 2, y - swordLength / 4);
+            context.moveTo(x - swordWidth / 2, y + swordLength / 4);
+            context.lineTo(x + swordWidth / 2, y + swordLength / 4);
             context.stroke();
         }
 
@@ -81,7 +84,9 @@
                     const hand = predictions[0].bbox; // Caja delimitadora de la mano
                     const x = hand[0] + hand[2] / 2;
                     const y = hand[1] + hand[3] / 2;
-
+                    
+                    console.log(`Hand position: x=${x}, y=${y}`); // Depurar la posición
+                    
                     drawSword(x, y);
                 }
                 requestAnimationFrame(detectHand);
