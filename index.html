@@ -57,6 +57,12 @@
             context.drawImage(swordImage, x - swordImage.width / 2, y - swordImage.height / 2);
         }
 
+        function drawDebugRect(x, y, width, height) {
+            context.strokeStyle = 'cyan'; // Color del rectángulo de depuración
+            context.lineWidth = 2;
+            context.strokeRect(x, y, width, height);
+        }
+
         function detectGreenObject() {
             function processFrame() {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -65,6 +71,7 @@
 
                 let minDistance = Infinity;
                 let closestPoint = { x: -100, y: -100 };
+                let closestRect = { x: 0, y: 0, width: 0, height: 0 };
 
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
@@ -81,12 +88,23 @@
                         if (distance < minDistance) {
                             minDistance = distance;
                             closestPoint = { x, y };
+
+                            // Definir el rectángulo de depuración
+                            if (x < closestRect.x) closestRect.x = x;
+                            if (y < closestRect.y) closestRect.y = y;
+                            if (x > closestRect.width) closestRect.width = x;
+                            if (y > closestRect.height) closestRect.height = y;
                         }
                     }
                 }
 
+                // Ajustar el tamaño del rectángulo
+                closestRect.width = closestRect.width - closestRect.x;
+                closestRect.height = closestRect.height - closestRect.y;
+
                 if (minDistance < Infinity) {
                     drawSword(closestPoint.x, closestPoint.y);
+                    drawDebugRect(closestRect.x, closestRect.y, closestRect.width, closestRect.height);
                 } else {
                     drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto verde
                 }
