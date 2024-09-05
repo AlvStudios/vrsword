@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espada en el Objeto Verde Más Cercano</title>
+    <title>Espada en el Objeto Negro Más Cercano</title>
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -26,7 +26,7 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            detectGreenObject();
+            detectBlackObject();
         }
 
         function startVideo() {
@@ -63,7 +63,7 @@
             context.stroke();
         }
 
-        function detectGreenObject() {
+        function detectBlackObject() {
             function processFrame() {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const frame = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -78,7 +78,8 @@
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    if (r < 100 && g > 150 && b < 100) { // Ajusta estos valores para detectar el verde
+                    // Detección de negro: valores bajos en R, G y B
+                    if (r < 50 && g < 50 && b < 50) {
                         const x = (i / 4) % canvas.width;
                         const y = Math.floor((i / 4) / canvas.width);
 
@@ -96,7 +97,7 @@
                 if (minDistance < Infinity) {
                     drawSword(closestPoint.x, closestPoint.y);
                 } else {
-                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto verde
+                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto negro
                 }
 
                 drawDebugPoints(debugPoints);
