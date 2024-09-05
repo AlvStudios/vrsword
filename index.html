@@ -34,12 +34,26 @@
             height: 100%;
             z-index: 1;
         }
+
+        #switchCamera {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: white;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            z-index: 2;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
     <video id="video" autoplay></video>
     <canvas id="canvas"></canvas>
+    <button id="switchCamera">Cambiar Cámara</button>
 
     <!-- MediaPipe Hands Script -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
@@ -50,22 +64,35 @@
         const videoElement = document.getElementById('video');
         const canvasElement = document.getElementById('canvas');
         const canvasCtx = canvasElement.getContext('2d');
+        const switchCameraButton = document.getElementById('switchCamera');
 
-        // Reducir resolución del canvas para mejorar rendimiento
-        canvasElement.width = 640;
-        canvasElement.height = 480;
+        let currentStream;
+        let currentCamera = 'user';  // Iniciamos con la cámara frontal ('user')
 
-        // Iniciar la cámara
-        const camera = new Camera(videoElement, {
-            onFrame: async () => {
-                await hands.send({ image: videoElement });
-            },
-            width: 640,  // Reducido para mejorar rendimiento
-            height: 480  // Reducido para mejorar rendimiento
+        async function startCamera(cameraType) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            currentStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: cameraType  // 'user' para frontal, 'environment' para trasera
+                }
+            });
+
+            videoElement.srcObject = currentStream;
+        }
+
+        // Iniciar la cámara con la frontal por defecto
+        startCamera(currentCamera);
+
+        // Alternar la cámara entre frontal y trasera
+        switchCameraButton.addEventListener('click', () => {
+            currentCamera = currentCamera === 'user' ? 'environment' : 'user';
+            startCamera(currentCamera);
         });
-        camera.start();
 
-        // Inicializar MediaPipe Hands
+        // Iniciar MediaPipe Hands
         const hands = new Hands({
             locateFile: (file) => {
                 return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
@@ -74,12 +101,21 @@
 
         hands.setOptions({
             maxNumHands: 1,
-            modelComplexity: 0,  // Reducido para mejorar rendimiento
+            modelComplexity: 0,
             minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.5
         });
 
         hands.onResults(onResults);
+
+        // Procesar cada frame de la cámara
+        videoElement.addEventListener('loadeddata', () => {
+            async function processFrame() {
+                await hands.send({ image: videoElement });
+                requestAnimationFrame(processFrame);  // Continuar procesamiento de frames
+            }
+            processFrame();  // Comenzar a procesar los frames
+        });
 
         function onResults(results) {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -97,8 +133,7 @@
         }
 
         function drawSword(x, y) {
-            // Dimensiones de la espada
-            const swordWidth = 100;  
+            const swordWidth = 100;
             const swordHeight = 200;
 
             // Dibujar la espada como un rectángulo
