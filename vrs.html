@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Sword VR Detection</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+        }
+
+        #video-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #video, #canvas {
+            width: 50vw;
+            height: 100vh;
+        }
+
+        #canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        /* Dividimos la pantalla en dos mitades */
+        #left-eye, #right-eye {
+            position: relative;
+            width: 50vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #right-eye {
+            left: 50vw;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="video-container">
+        <!-- Left eye view -->
+        <div id="left-eye">
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- Right eye view (clone) -->
+        <div id="right-eye">
+            <video id="video-clone" autoplay></video>
+            <canvas id="canvas-clone"></canvas>
+        </div>
+    </div>
+
+    <!-- MediaPipe Hands Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        // Duplicamos el video y el canvas para el otro ojo
+        const videoClone = document.getElementById('video-clone');
+        const canvasClone = document.getElementById('canvas-clone');
+        const canvasCloneCtx = canvasClone.getContext('2d');
+
+        // Iniciar la cámara
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({ image: videoElement });
+            },
+            width: 1280,
+            height: 720
+        });
+        camera.start();
+
+        // Inicializar MediaPipe Hands
+        const hands = new Hands({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            }
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        function onResults(results) {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            canvasClone.width = videoElement.videoWidth;
+            canvasClone.height = videoElement.videoHeight;
+
+            // Limpiamos ambos canvas
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCloneCtx.clearRect(0, 0, canvasClone.width, canvasClone.height);
+
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    // Obtener las coordenadas de la mano
+                    const x = landmarks[9].x * canvasElement.width;
+                    const y = landmarks[9].y * canvasElement.height;
+
+                    // Cargar la imagen de la espada
+                    const img = new Image();
+                    img.src = 'sword.png'; // Imagen de espada en el mismo directorio
+                    img.onload = () => {
+                        // Dibujar la espada en ambos canvas
+                        canvasCtx.drawImage(img, x - img.width / 2, y - img.height / 2);
+                        canvasCloneCtx.drawImage(img, x - img.width / 2, y - img.height / 2);
+                    };
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
