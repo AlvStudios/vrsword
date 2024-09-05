@@ -51,13 +51,17 @@
         const canvasElement = document.getElementById('canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
+        // Reducir resolución del canvas para mejorar rendimiento
+        canvasElement.width = 640;
+        canvasElement.height = 480;
+
         // Iniciar la cámara
         const camera = new Camera(videoElement, {
             onFrame: async () => {
                 await hands.send({ image: videoElement });
             },
-            width: 1280,
-            height: 720
+            width: 640,  // Reducido para mejorar rendimiento
+            height: 480  // Reducido para mejorar rendimiento
         });
         camera.start();
 
@@ -70,38 +74,20 @@
 
         hands.setOptions({
             maxNumHands: 1,
-            modelComplexity: 1,
+            modelComplexity: 0,  // Reducido para mejorar rendimiento
             minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.5
         });
 
         hands.onResults(onResults);
 
-        window.addEventListener("resize", () => {
-            canvasElement.width = videoElement.videoWidth;
-            canvasElement.height = videoElement.videoHeight;
-        });
-
         function onResults(results) {
-            canvasElement.width = videoElement.videoWidth;
-            canvasElement.height = videoElement.videoHeight;
-
-            // Limpiamos el canvas
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 const landmarks = results.multiHandLandmarks[0];
 
-                // Dibujar puntos de depuración
-                landmarks.forEach(landmark => {
-                    const x = landmark.x * canvasElement.width;
-                    const y = landmark.y * canvasElement.height;
-                    canvasCtx.beginPath();
-                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-                    canvasCtx.fillStyle = 'red';
-                    canvasCtx.fill();
-                });
-
+                // Obtener la posición de la base del dedo medio
                 const x = landmarks[9].x * canvasElement.width;
                 const y = landmarks[9].y * canvasElement.height;
 
@@ -111,17 +97,17 @@
         }
 
         function drawSword(x, y) {
-            // Aumentamos las dimensiones de la espada
-            const swordWidth = 150;  // Incrementa el ancho de la espada
-            const swordHeight = 300;  // Incrementa la altura de la espada
+            // Dimensiones de la espada
+            const swordWidth = 100;  
+            const swordHeight = 200;
 
-            // Dibujar la espada como un rectángulo grande
+            // Dibujar la espada como un rectángulo
             canvasCtx.fillStyle = 'silver';
             canvasCtx.fillRect(x - swordWidth / 2, y - swordHeight / 2, swordWidth, swordHeight);
 
-            // Dibujar el mango más grande
+            // Dibujar el mango de la espada
             canvasCtx.fillStyle = 'brown';
-            canvasCtx.fillRect(x - 20, y + swordHeight / 2 - 30, 40, 60);
+            canvasCtx.fillRect(x - 15, y + swordHeight / 2 - 30, 30, 60);
         }
     </script>
 </body>
