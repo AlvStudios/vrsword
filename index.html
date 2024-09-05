@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espada en el Objeto Verde</title>
+    <title>Espada en el Objeto Verde con Depuración</title>
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -63,6 +63,15 @@
             context.stroke();
         }
 
+        function drawDebugPoints(points) {
+            context.fillStyle = 'red';
+            points.forEach(point => {
+                context.beginPath();
+                context.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                context.fill();
+            });
+        }
+
         function detectGreenObject() {
             const greenLower = [35, 100, 100]; // Rango mínimo de color verde en HSV
             const greenUpper = [85, 255, 255]; // Rango máximo de color verde en HSV
@@ -73,6 +82,7 @@
                 const data = frame.data;
 
                 let xSum = 0, ySum = 0, count = 0;
+                const debugPoints = [];
 
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
@@ -91,6 +101,8 @@
                         xSum += x;
                         ySum += y;
                         count++;
+
+                        debugPoints.push({ x, y });
                     }
                 }
 
@@ -101,6 +113,8 @@
                 } else {
                     drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto verde
                 }
+
+                drawDebugPoints(debugPoints);
 
                 requestAnimationFrame(processFrame);
             }
