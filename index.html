@@ -32,7 +32,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1; /* Asegúrate de que el canvas esté encima del video */
+            z-index: 1;
         }
     </style>
 </head>
@@ -77,14 +77,12 @@
 
         hands.onResults(onResults);
 
-        // Ajustar tamaño del canvas cuando se cambie la orientación o tamaño de la ventana
         window.addEventListener("resize", () => {
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
         });
 
         function onResults(results) {
-            // Asegurarse de que el canvas coincide con el tamaño del video
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
 
@@ -94,7 +92,7 @@
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 const landmarks = results.multiHandLandmarks[0];
 
-                // Dibujar puntos de depuración en la mano detectada
+                // Dibujar puntos de depuración
                 landmarks.forEach(landmark => {
                     const x = landmark.x * canvasElement.width;
                     const y = landmark.y * canvasElement.height;
@@ -104,7 +102,6 @@
                     canvasCtx.fill();
                 });
 
-                // Obtener las coordenadas del punto 9 (base del dedo medio)
                 const x = landmarks[9].x * canvasElement.width;
                 const y = landmarks[9].y * canvasElement.height;
 
@@ -114,17 +111,17 @@
         }
 
         function drawSword(x, y) {
-            // Definir las dimensiones de la espada
-            const swordWidth = 100;
-            const swordHeight = 200;
+            // Aumentamos las dimensiones de la espada
+            const swordWidth = 150;  // Incrementa el ancho de la espada
+            const swordHeight = 300;  // Incrementa la altura de la espada
 
-            // Dibujar la espada como un rectángulo gris por simplicidad
+            // Dibujar la espada como un rectángulo grande
             canvasCtx.fillStyle = 'silver';
             canvasCtx.fillRect(x - swordWidth / 2, y - swordHeight / 2, swordWidth, swordHeight);
 
-            // Añadir un simple mango de la espada
+            // Dibujar el mango más grande
             canvasCtx.fillStyle = 'brown';
-            canvasCtx.fillRect(x - 10, y + swordHeight / 2 - 20, 20, 40);
+            canvasCtx.fillRect(x - 20, y + swordHeight / 2 - 30, 40, 60);
         }
     </script>
 </body>
