@@ -17,10 +17,6 @@
     <!-- Incluir handtrack.js desde un CDN -->
     <script src="https://cdn.jsdelivr.net/npm/handtrackjs@0.0.9/dist/handtrack.min.js"></script>
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('swordCanvas');
-        const context = canvas.getContext('2d');
-
         // Configuración del modelo de detección
         const modelParams = {
             flipHorizontal: true,   // Espejar horizontalmente
@@ -43,12 +39,8 @@
             return new Promise((resolve, reject) => {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                     .then(stream => {
-                        video.srcObject = stream;
-                        video.onloadedmetadata = () => {
-                            video.play();
-                            resizeCanvas(); // Ajustar el tamaño del canvas cuando el video esté listo
-                            resolve();
-                        };
+                        document.getElementById('video').srcObject = stream;
+                        document.getElementById('video').onloadedmetadata = () => resolve();
                     })
                     .catch(err => reject(err));
             });
@@ -56,46 +48,45 @@
 
         // Ajustar el tamaño del canvas
         function resizeCanvas() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('swordCanvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
         }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         // Dibujar la espada
         function drawSword(x, y) {
+            const canvas = document.getElementById('swordCanvas');
+            const context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Ajustar el tamaño y la posición de la espada
-            const swordLength = 100;
-            const swordWidth = 10;
-            
+            // Dibujar la espada en el canvas
             context.strokeStyle = 'silver';
-            context.lineWidth = swordWidth;
+            context.lineWidth = 5;
             context.beginPath();
-            context.moveTo(x, y - swordLength / 2);
-            context.lineTo(x, y + swordLength / 2);
-            context.moveTo(x - swordWidth / 2, y - swordLength / 4);
-            context.lineTo(x + swordWidth / 2, y - swordLength / 4);
-            context.moveTo(x - swordWidth / 2, y + swordLength / 4);
-            context.lineTo(x + swordWidth / 2, y + swordLength / 4);
+            context.moveTo(x, y - 20);
+            context.lineTo(x, y + 80);
+            context.moveTo(x - 10, y - 10);
+            context.lineTo(x + 10, y - 10);
+            context.moveTo(x - 10, y + 80);
+            context.lineTo(x + 10, y + 80);
             context.stroke();
         }
 
         // Detectar la mano
         function detectHand() {
-            model.detect(video).then(predictions => {
+            model.detect(document.getElementById('video')).then(predictions => {
                 if (predictions.length > 0) {
                     const hand = predictions[0].bbox; // Caja delimitadora de la mano
                     const x = hand[0] + hand[2] / 2;
                     const y = hand[1] + hand[3] / 2;
-                    
-                    console.log(`Hand position: x=${x}, y=${y}`); // Depurar la posición
-                    
+
                     drawSword(x, y);
-                } else {
-                    console.log('No hand detected'); // Depurar si no se detecta la mano
                 }
                 requestAnimationFrame(detectHand);
-            }).catch(err => console.error('Error detecting hand:', err));
+            });
         }
 
         init();
