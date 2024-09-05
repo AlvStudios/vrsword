@@ -1,159 +1,74 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detección de Mano con Espada</title>
+    <title>Mano y Espada</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: black;
-            overflow: hidden;
-        }
-
-        #video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-        }
-
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        #switchCamera {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background-color: rgba(255, 255, 255, 0.8);
-            color: black;
-            border: none;
-            border-radius: 5px;
-            z-index: 2;
-            cursor: pointer;
-            font-size: 16px;
-        }
+        body { margin: 0; overflow: hidden; }
+        #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        #swordCanvas { position: absolute; pointer-events: none; }
     </style>
 </head>
 <body>
+    <video id="video" autoplay></video>
+    <canvas id="swordCanvas"></canvas>
 
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-    <button id="switchCamera">Cambiar Cámara</button>
-
-    <!-- MediaPipe Hands Script -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clmtrackr/1.1.0/clmtrackr.min.js"></script>
     <script>
-        const videoElement = document.getElementById('video');
-        const canvasElement = document.getElementById('canvas');
-        const canvasCtx = canvasElement.getContext('2d');
-        const switchCameraButton = document.getElementById('switchCamera');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('swordCanvas');
+        const context = canvas.getContext('2d');
+        const tracker = new clm.tracker();
+        tracker.init();
+        tracker.start(video);
 
-        let currentStream;
-        let currentCamera = 'user';
-
-        // Iniciar MediaPipe Hands
-        const hands = new Hands({
-            locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-            }
-        });
-
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 0,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-
-        hands.onResults(onResults);
-
-        // Función para iniciar la cámara y reiniciar el procesamiento
-        async function startCamera(cameraType) {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-
-            currentStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: cameraType
-                }
+        // Configurar el acceso a la cámara
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Error al acceder a la cámara: ', err);
             });
 
-            videoElement.srcObject = currentStream;
+        // Configurar el canvas
+        function resizeCanvas() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-            // Esperar a que el video esté listo
-            videoElement.onloadedmetadata = () => {
-                videoElement.play();
-                startProcessing();  // Reiniciar el procesamiento de MediaPipe
-            };
+        // Dibujar la espada
+        function drawSword(x, y) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar la espada en el canvas
+            context.strokeStyle = 'silver';
+            context.lineWidth = 5;
+            context.beginPath();
+            context.moveTo(x, y - 20);
+            context.lineTo(x, y + 80);
+            context.moveTo(x - 10, y - 10);
+            context.lineTo(x + 10, y - 10);
+            context.moveTo(x - 10, y + 80);
+            context.lineTo(x + 10, y + 80);
+            context.stroke();
         }
 
-        function startProcessing() {
-            videoElement.addEventListener('loadeddata', async () => {
-                // Procesar cada frame usando MediaPipe
-                async function processFrame() {
-                    await hands.send({ image: videoElement });
-                    requestAnimationFrame(processFrame);
-                }
-                processFrame();
-            });
-        }
-
-        // Iniciar con la cámara frontal por defecto
-        startCamera(currentCamera);
-
-        // Alternar entre cámaras
-        switchCameraButton.addEventListener('click', () => {
-            currentCamera = currentCamera === 'user' ? 'environment' : 'user';
-            startCamera(currentCamera);  // Reiniciar la cámara y el procesamiento
-        });
-
-        function onResults(results) {
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
-
-                // Obtener la posición de la base del dedo medio
-                const x = landmarks[9].x * canvasElement.width;
-                const y = landmarks[9].y * canvasElement.height;
-
-                // Dibujar la espada en la mano
+        // Actualizar la posición de la espada
+        function update() {
+            const positions = tracker.getCurrentPosition();
+            if (positions && positions.length > 0) {
+                // La posición de la mano se puede encontrar en los puntos 6 y 7 de `positions`
+                const x = positions[6][0];
+                const y = positions[6][1];
                 drawSword(x, y);
             }
+            requestAnimationFrame(update);
         }
-
-        function drawSword(x, y) {
-            const swordWidth = 100;
-            const swordHeight = 200;
-
-            // Dibujar la espada como un rectángulo
-            canvasCtx.fillStyle = 'silver';
-            canvasCtx.fillRect(x - swordWidth / 2, y - swordHeight / 2, swordWidth, swordHeight);
-
-            // Dibujar el mango de la espada
-            canvasCtx.fillStyle = 'brown';
-            canvasCtx.fillRect(x - 15, y + swordHeight / 2 - 30, 30, 60);
-        }
+        update();
     </script>
 </body>
 </html>
