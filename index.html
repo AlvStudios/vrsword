@@ -71,8 +71,8 @@
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    // Detección de rosa: valores altos en R y B, valores medios en G
-                    if (r > 150 && b > 150 && g < 100) {
+                    // Detección de rosa: valores altos en R y B, y valores de G variados
+                    if (r > 150 && b > 150 && g < 120) {
                         const x = (i / 4) % canvas.width;
                         const y = Math.floor((i / 4) / canvas.width);
 
