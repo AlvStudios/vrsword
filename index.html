@@ -65,16 +65,18 @@
             const context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Dibujar la espada en el canvas
+            // Ajustar la posición de la espada para que parezca que está en tu mano
+            const swordWidth = 20;
+            const swordHeight = 80;
+
             context.strokeStyle = 'silver';
             context.lineWidth = 5;
             context.beginPath();
-            context.moveTo(x, y - 20);
-            context.lineTo(x, y + 80);
-            context.moveTo(x - 10, y - 10);
-            context.lineTo(x + 10, y - 10);
-            context.moveTo(x - 10, y + 80);
-            context.lineTo(x + 10, y + 80);
+            context.moveTo(x - swordWidth / 2, y - swordHeight / 2);
+            context.lineTo(x + swordWidth / 2, y - swordHeight / 2);
+            context.lineTo(x + swordWidth / 2, y + swordHeight / 2);
+            context.lineTo(x - swordWidth / 2, y + swordHeight / 2);
+            context.closePath(); // Cierra el contorno del rectángulo de la espada
             context.stroke();
         }
 
