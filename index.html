@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-    <video id="video" autoplay></video>
+    <video id="video" autoplay muted></video>
     <canvas id="swordCanvas"></canvas>
 
     <!-- Incluir MediaPipe y TensorFlow.js desde un CDN -->
@@ -25,10 +25,8 @@
         let hands;
 
         async function init() {
-            // Inicializar el video
             await startVideo();
 
-            // Configuración del modelo de MediaPipe
             hands = new Hands({
                 locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.5.1/${file}`
             });
@@ -41,7 +39,6 @@
 
             hands.onResults(onResults);
 
-            // Crear un contenedor de video para la cámara
             const camera = new Camera(video, {
                 onFrame: async () => {
                     await hands.send({ image: video });
@@ -52,23 +49,25 @@
             camera.start();
         }
 
-        // Iniciar la cámara
         function startVideo() {
             return new Promise((resolve, reject) => {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                     .then(stream => {
                         video.srcObject = stream;
                         video.onloadedmetadata = () => {
+                            video.play();
                             canvas.width = video.videoWidth;
                             canvas.height = video.videoHeight;
                             resolve();
                         };
                     })
-                    .catch(err => reject(err));
+                    .catch(err => {
+                        console.error('Error accessing camera:', err);
+                        reject(err);
+                    });
             });
         }
 
-        // Dibujar la espada
         function drawSword(x, y) {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -86,12 +85,13 @@
             context.stroke();
         }
 
-        // Manejar los resultados de MediaPipe
         function onResults(results) {
             if (results.multiHandLandmarks.length > 0) {
                 const landmarks = results.multiHandLandmarks[0];
                 const x = landmarks[9].x * canvas.width; // Índice de la muñeca
                 const y = landmarks[9].y * canvas.height; // Índice de la muñeca
+
+                console.log('Drawing sword at:', x, y); // Debug: mostrar las coordenadas en la consola
 
                 drawSword(x, y);
             } else {
