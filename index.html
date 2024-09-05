@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mano y Espada con MediaPipe</title>
+    <title>Espada en el Objeto Verde</title>
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -14,39 +14,19 @@
     <video id="video" autoplay muted></video>
     <canvas id="swordCanvas"></canvas>
 
-    <!-- Incluir MediaPipe y TensorFlow.js desde un CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.5.1/dist/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0/dist/tf.min.js"></script>
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('swordCanvas');
         const context = canvas.getContext('2d');
 
-        let hands;
-
         async function init() {
             await startVideo();
 
-            hands = new Hands({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.5.1/${file}`
-            });
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
-            hands.setOptions({
-                maxNumHands: 1,
-                minDetectionConfidence: 0.7,
-                minTrackingConfidence: 0.5
-            });
-
-            hands.onResults(onResults);
-
-            const camera = new Camera(video, {
-                onFrame: async () => {
-                    await hands.send({ image: video });
-                },
-                width: 640,
-                height: 480
-            });
-            camera.start();
+            detectGreenObject();
         }
 
         function startVideo() {
@@ -56,8 +36,6 @@
                         video.srcObject = stream;
                         video.onloadedmetadata = () => {
                             video.play();
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
                             resolve();
                         };
                     })
@@ -85,18 +63,77 @@
             context.stroke();
         }
 
-        function onResults(results) {
-            if (results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
-                const x = landmarks[9].x * canvas.width; // Índice de la muñeca
-                const y = landmarks[9].y * canvas.height; // Índice de la muñeca
+        function detectGreenObject() {
+            const greenLower = [35, 100, 100]; // Rango mínimo de color verde en HSV
+            const greenUpper = [85, 255, 255]; // Rango máximo de color verde en HSV
 
-                console.log('Drawing sword at:', x, y); // Debug: mostrar las coordenadas en la consola
+            function processFrame() {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frame = context.getImageData(0, 0, canvas.width, canvas.height);
+                const data = frame.data;
 
-                drawSword(x, y);
-            } else {
-                drawSword(-100, -100); // Coloca la espada fuera de la vista
+                let xSum = 0, ySum = 0, count = 0;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // Convertir RGB a HSV
+                    const [h, s, v] = rgbToHsv(r, g, b);
+
+                    if (h >= greenLower[0] && h <= greenUpper[0] &&
+                        s >= greenLower[1] && s <= greenUpper[1] &&
+                        v >= greenLower[2] && v <= greenUpper[2]) {
+
+                        const x = (i / 4) % canvas.width;
+                        const y = Math.floor((i / 4) / canvas.width);
+                        xSum += x;
+                        ySum += y;
+                        count++;
+                    }
+                }
+
+                if (count > 0) {
+                    const x = xSum / count;
+                    const y = ySum / count;
+                    drawSword(x, y);
+                } else {
+                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto verde
+                }
+
+                requestAnimationFrame(processFrame);
             }
+
+            processFrame();
+        }
+
+        function rgbToHsv(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const delta = max - min;
+
+            let h = 0;
+            let s = max === 0 ? 0 : delta / max;
+            let v = max;
+
+            if (delta > 0) {
+                if (max === r) {
+                    h = (g - b) / delta + (g < b ? 6 : 0);
+                } else if (max === g) {
+                    h = (b - r) / delta + 2;
+                } else if (max === b) {
+                    h = (r - g) / delta + 4;
+                }
+
+                h /= 6;
+            }
+
+            return [h * 360, s * 100, v * 100];
         }
 
         init();
