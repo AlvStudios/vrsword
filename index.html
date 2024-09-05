@@ -32,7 +32,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
+            z-index: 1; /* Asegúrate de que el canvas esté encima del video */
         }
     </style>
 </head>
@@ -77,7 +77,14 @@
 
         hands.onResults(onResults);
 
+        // Ajustar tamaño del canvas cuando se cambie la orientación o tamaño de la ventana
+        window.addEventListener("resize", () => {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+        });
+
         function onResults(results) {
+            // Asegurarse de que el canvas coincide con el tamaño del video
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
 
@@ -87,30 +94,37 @@
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 const landmarks = results.multiHandLandmarks[0];
 
-                // Obtener las coordenadas del punto de la base del dedo medio (punto 9)
+                // Dibujar puntos de depuración en la mano detectada
+                landmarks.forEach(landmark => {
+                    const x = landmark.x * canvasElement.width;
+                    const y = landmark.y * canvasElement.height;
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                    canvasCtx.fillStyle = 'red';
+                    canvasCtx.fill();
+                });
+
+                // Obtener las coordenadas del punto 9 (base del dedo medio)
                 const x = landmarks[9].x * canvasElement.width;
                 const y = landmarks[9].y * canvasElement.height;
 
-                // Dibujar la espada directamente en el canvas
+                // Dibujar la espada en la mano
                 drawSword(x, y);
             }
         }
 
         function drawSword(x, y) {
-            const swordWidth = 20;
-            const swordHeight = 100;
+            // Definir las dimensiones de la espada
+            const swordWidth = 100;
+            const swordHeight = 200;
 
-            // Dibujar el mango de la espada
+            // Dibujar la espada como un rectángulo gris por simplicidad
+            canvasCtx.fillStyle = 'silver';
+            canvasCtx.fillRect(x - swordWidth / 2, y - swordHeight / 2, swordWidth, swordHeight);
+
+            // Añadir un simple mango de la espada
             canvasCtx.fillStyle = 'brown';
-            canvasCtx.fillRect(x - swordWidth / 4, y, swordWidth / 2, swordHeight / 4);
-
-            // Dibujar la hoja de la espada
-            canvasCtx.fillStyle = 'gray';
-            canvasCtx.fillRect(x - swordWidth / 2, y - swordHeight, swordWidth, swordHeight);
-
-            // Dibujar la guarda de la espada
-            canvasCtx.fillStyle = 'gold';
-            canvasCtx.fillRect(x - swordWidth, y, swordWidth * 2, swordHeight / 8);
+            canvasCtx.fillRect(x - 10, y + swordHeight / 2 - 20, 20, 40);
         }
     </script>
 </body>
