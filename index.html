@@ -91,16 +91,26 @@
                 const x = landmarks[9].x * canvasElement.width;
                 const y = landmarks[9].y * canvasElement.height;
 
-                // Cargar la imagen de la espada
-                const img = new Image();
-                img.src = 'sword.png'; // Ruta de la imagen de la espada
-                img.onload = () => {
-                    // Ajustar el tamaño de la espada y centrarla en la mano detectada
-                    const swordWidth = 100;  // Ajusta el tamaño de la espada según sea necesario
-                    const swordHeight = 200;
-                    canvasCtx.drawImage(img, x - swordWidth / 2, y - swordHeight / 2, swordWidth, swordHeight);
-                };
+                // Dibujar la espada directamente en el canvas
+                drawSword(x, y);
             }
+        }
+
+        function drawSword(x, y) {
+            const swordWidth = 20;
+            const swordHeight = 100;
+
+            // Dibujar el mango de la espada
+            canvasCtx.fillStyle = 'brown';
+            canvasCtx.fillRect(x - swordWidth / 4, y, swordWidth / 2, swordHeight / 4);
+
+            // Dibujar la hoja de la espada
+            canvasCtx.fillStyle = 'gray';
+            canvasCtx.fillRect(x - swordWidth / 2, y - swordHeight, swordWidth, swordHeight);
+
+            // Dibujar la guarda de la espada
+            canvasCtx.fillStyle = 'gold';
+            canvasCtx.fillRect(x - swordWidth, y, swordWidth * 2, swordHeight / 8);
         }
     </script>
 </body>
