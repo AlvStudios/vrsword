@@ -6,8 +6,8 @@
     <title>Mano y Espada con MediaPipe</title>
     <style>
         body { margin: 0; overflow: hidden; }
-        #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        #swordCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        #swordCanvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2; }
     </style>
 </head>
 <body>
@@ -90,8 +90,8 @@
         function onResults(results) {
             if (results.multiHandLandmarks.length > 0) {
                 const landmarks = results.multiHandLandmarks[0];
-                const x = landmarks[9].x * canvas.width; // Indice de la muñeca
-                const y = landmarks[9].y * canvas.height; // Indice de la muñeca
+                const x = landmarks[9].x * canvas.width; // Índice de la muñeca
+                const y = landmarks[9].y * canvas.height; // Índice de la muñeca
 
                 drawSword(x, y);
             } else {
