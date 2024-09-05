@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espada en el Objeto Negro Más Cercano</title>
+    <title>Espada en el Objeto Rosa Más Cercano</title>
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -30,7 +30,7 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            detectBlackObject();
+            detectPinkObject();
         }
 
         function startVideo() {
@@ -57,7 +57,7 @@
             context.drawImage(swordImage, x - swordImage.width / 2, y - swordImage.height / 2);
         }
 
-        function detectBlackObject() {
+        function detectPinkObject() {
             function processFrame() {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const frame = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -65,19 +65,16 @@
 
                 let minDistance = Infinity;
                 let closestPoint = { x: -100, y: -100 };
-                let debugPoints = [];
 
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    // Detección de negro: valores bajos en R, G y B
-                    if (r < 50 && g < 50 && b < 50) {
+                    // Detección de rosa: valores altos en R y B, valores medios en G
+                    if (r > 150 && b > 150 && g < 100) {
                         const x = (i / 4) % canvas.width;
                         const y = Math.floor((i / 4) / canvas.width);
-
-                        debugPoints.push({ x, y });
 
                         const distance = Math.sqrt(Math.pow(x - canvas.width / 2, 2) + Math.pow(y - canvas.height / 2, 2));
 
@@ -91,24 +88,13 @@
                 if (minDistance < Infinity) {
                     drawSword(closestPoint.x, closestPoint.y);
                 } else {
-                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto negro
+                    drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto rosa
                 }
-
-                drawDebugPoints(debugPoints);
 
                 requestAnimationFrame(processFrame);
             }
 
             processFrame();
-        }
-
-        function drawDebugPoints(points) {
-            context.fillStyle = 'red';
-            points.forEach(point => {
-                context.beginPath();
-                context.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-                context.fill();
-            });
         }
 
         init();
