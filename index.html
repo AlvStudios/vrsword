@@ -73,8 +73,8 @@
         }
 
         function detectGreenObject() {
-            const greenLower = [35, 100, 100]; // Rango mínimo de color verde en HSV
-            const greenUpper = [85, 255, 255]; // Rango máximo de color verde en HSV
+            const greenLower = [35, 50, 50]; // Ajusta estos valores según sea necesario
+            const greenUpper = [85, 255, 255];
 
             function processFrame() {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -91,6 +91,9 @@
 
                     // Convertir RGB a HSV
                     const [h, s, v] = rgbToHsv(r, g, b);
+
+                    // Debug: Verificar valores HSV en la consola
+                    // console.log(`HSV: ${h}, ${s}, ${v}`);
 
                     if (h >= greenLower[0] && h <= greenUpper[0] &&
                         s >= greenLower[1] && s <= greenUpper[1] &&
