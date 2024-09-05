@@ -44,7 +44,11 @@
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                     .then(stream => {
                         video.srcObject = stream;
-                        video.onloadedmetadata = () => resolve();
+                        video.onloadedmetadata = () => {
+                            video.play();
+                            resizeCanvas(); // Ajustar el tamaño del canvas cuando el video esté listo
+                            resolve();
+                        };
                     })
                     .catch(err => reject(err));
             });
@@ -55,15 +59,14 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
         }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
         // Dibujar la espada
         function drawSword(x, y) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Ajustar el tamaño y la posición de la espada
             const swordLength = 100;
             const swordWidth = 10;
-            
-            context.clearRect(0, 0, canvas.width, canvas.height);
             
             context.strokeStyle = 'silver';
             context.lineWidth = swordWidth;
@@ -88,9 +91,11 @@
                     console.log(`Hand position: x=${x}, y=${y}`); // Depurar la posición
                     
                     drawSword(x, y);
+                } else {
+                    console.log('No hand detected'); // Depurar si no se detecta la mano
                 }
                 requestAnimationFrame(detectHand);
-            });
+            }).catch(err => console.error('Error detecting hand:', err));
         }
 
         init();
