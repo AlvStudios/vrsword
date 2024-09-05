@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espada en el Objeto Verde con Depuración</title>
+    <title>Espada en el Objeto Verde Más Cercano</title>
     <style>
         body { margin: 0; overflow: hidden; }
         #video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -63,15 +63,6 @@
             context.stroke();
         }
 
-        function drawDebugPoints(points) {
-            context.fillStyle = 'red';
-            points.forEach(point => {
-                context.beginPath();
-                context.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-                context.fill();
-            });
-        }
-
         function detectGreenObject() {
             const greenLower = [35, 50, 50]; // Ajusta estos valores según sea necesario
             const greenUpper = [85, 255, 255];
@@ -81,19 +72,16 @@
                 const frame = context.getImageData(0, 0, canvas.width, canvas.height);
                 const data = frame.data;
 
-                let xSum = 0, ySum = 0, count = 0;
-                const debugPoints = [];
+                let minDistance = Infinity;
+                let closestPoint = { x: -100, y: -100 };
+                let debugPoints = [];
 
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    // Convertir RGB a HSV
                     const [h, s, v] = rgbToHsv(r, g, b);
-
-                    // Debug: Verificar valores HSV en la consola
-                    // console.log(`HSV: ${h}, ${s}, ${v}`);
 
                     if (h >= greenLower[0] && h <= greenUpper[0] &&
                         s >= greenLower[1] && s <= greenUpper[1] &&
@@ -101,18 +89,20 @@
 
                         const x = (i / 4) % canvas.width;
                         const y = Math.floor((i / 4) / canvas.width);
-                        xSum += x;
-                        ySum += y;
-                        count++;
 
                         debugPoints.push({ x, y });
+
+                        const distance = Math.sqrt(Math.pow(x - canvas.width / 2, 2) + Math.pow(y - canvas.height / 2, 2));
+
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestPoint = { x, y };
+                        }
                     }
                 }
 
-                if (count > 0) {
-                    const x = xSum / count;
-                    const y = ySum / count;
-                    drawSword(x, y);
+                if (minDistance < Infinity) {
+                    drawSword(closestPoint.x, closestPoint.y);
                 } else {
                     drawSword(-100, -100); // Coloca la espada fuera de la vista si no hay objeto verde
                 }
@@ -151,6 +141,15 @@
             }
 
             return [h * 360, s * 100, v * 100];
+        }
+
+        function drawDebugPoints(points) {
+            context.fillStyle = 'red';
+            points.forEach(point => {
+                context.beginPath();
+                context.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                context.fill();
+            });
         }
 
         init();
